@@ -21,8 +21,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.10")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.10")
+    implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
     implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
     implementation("org.tera201:javafx-uml-graph:0.0.1-SNAPSHOT")
     implementation("org.tera201:code-to-uml:0.0.2-SNAPSHOT")
