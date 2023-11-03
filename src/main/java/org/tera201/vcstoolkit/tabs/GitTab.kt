@@ -4,12 +4,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import org.tera201.vcstoolkit.helpers.SharedModel
-import org.tera201.vcstoolkit.services.VCSToolkitCache
-import org.tera201.vcstoolkit.services.settings.VCSToolkitSettings
-import org.tera201.vcstoolkit.utils.toCircle
-import org.tera201.code2uml.java20.console.JavaParserRunner
-import org.tera201.code2uml.uml.util.UMLModelHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -17,7 +11,6 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.observable.util.whenSizeChanged
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -26,21 +19,22 @@ import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.ui.util.minimumHeight
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ui.UIUtil
 import javafx.application.Platform
 import model.console.BuildModel
 import org.eclipse.uml2.uml.Model
-import org.repodriller.scm.GitRepository
 import org.repodriller.scm.SCMRepository
+import org.tera201.code2uml.java20.console.JavaParserRunner
+import org.tera201.code2uml.uml.util.UMLModelHandler
+import org.tera201.vcstoolkit.helpers.SharedModel
+import org.tera201.vcstoolkit.services.VCSToolkitCache
+import org.tera201.vcstoolkit.services.settings.VCSToolkitSettings
+import org.tera201.vcstoolkit.utils.toCircle
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Graphics
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.io.File
 import java.io.IOException
 import javax.swing.*
@@ -116,17 +110,22 @@ class GitPanel : JPanel() {
             })
 
         urlField.text = "https://github.com/arnohaase/a-foundation.git"
-        this.minimumHeight = 490
+        this.minimumSize = Dimension(0, 200)
+        this.addComponentListener(object : ComponentAdapter() {
+            override fun componentResized(e: ComponentEvent?) {
+                super.componentResized(e)
+                val newWidth = e!!.component.width
+                val newHeight = e!!.component.height
+                urlField.preferredSize = (Dimension(newWidth - getButton.width - 40, getButton.height))
+                showSplitPane.preferredSize =
+                    Dimension(newWidth - 20, ((newHeight - 130 ) * 2f / 3f).toInt())
+                logModelSplitPane.preferredSize = Dimension(
+                    newWidth - 140,
+                    ((newHeight - 130 ) * 1f / 3f).toInt()
+                )
 
-        this.whenSizeChanged {
-            urlField.preferredSize = (Dimension(this.width - getButton.width - 40, getButton.height))
-            showSplitPane.preferredSize =
-                Dimension(this.width - 20, ((this.height - 130 ) * 2f / 3f).toInt())
-            logModelSplitPane.preferredSize = Dimension(
-                this.width - 140,
-                ((this.height - 130 ) * 1f / 3f).toInt()
-            )
-        }
+            }
+        })
 
         getButton.addActionListener {
             thread {
@@ -224,20 +223,28 @@ class GitPanel : JPanel() {
         showSplitPane.setUI(CustomSplitPaneUI())
         vcSplitPane.setUI(CustomSplitPaneUI())
         logModelSplitPane.setUI(CustomSplitPaneUI())
-        showSplitPane.whenSizeChanged {
-            if (showSplitPane.dividerLocation != it.width / 2)
-                showSplitPane.dividerLocation = it.width / 2
-        }
-        vcSplitPane.whenSizeChanged {
-            if (vcSplitPane.dividerLocation != it.height / 2)
-                vcSplitPane.dividerLocation = it.height / 2
-        }
-        logModelSplitPane.whenSizeChanged {
-            if (logModelSplitPane.dividerLocation != it.width / 2)
-                logModelSplitPane.dividerLocation = it.width / 2
-        }
+        resizeSplitPaneDevider(showSplitPane)
+        resizeSplitPaneDevider(vcSplitPane)
+        resizeSplitPaneDevider(logModelSplitPane)
         setupListSelectionListeners()
         setupListDoubleClickAction()
+    }
+
+    private fun resizeSplitPaneDevider(jSplitPane: JSplitPane, ) {
+        jSplitPane.addComponentListener(object : ComponentAdapter() {
+            override fun componentResized(e: ComponentEvent?) {
+                super.componentResized(e)
+                if (jSplitPane.orientation == JSplitPane.HORIZONTAL_SPLIT) {
+                    val newWidth = e!!.component.width
+                    if (jSplitPane.dividerLocation != newWidth / 2)
+                        jSplitPane.dividerLocation = newWidth / 2
+                } else {
+                    val newHeight = e!!.component.height
+                    if (jSplitPane.dividerLocation != newHeight / 2)
+                        jSplitPane.dividerLocation = newHeight / 2
+                }
+            }
+        })
     }
 
     private fun setupListSelectionListeners() {
