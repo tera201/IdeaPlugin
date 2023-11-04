@@ -230,6 +230,8 @@ class GitPanel : JPanel() {
                 populateJBList(branchListModel, buildModel.getBranches(myRepo).filter { it != "HEAD" })
                 populateJBList(tagListModel, buildModel.getTags(myRepo))
             } else if (cache.projectPathMap[projectName]!!.isExternal && settings.externalProjectMode == 1) {
+                branchListModel.clear()
+                tagListModel.clear()
                 externalWarningNotification()
             } else {
                 val group = NotificationGroupManager.getInstance().getNotificationGroup("VCSToolkitNotify")
@@ -336,7 +338,6 @@ class GitPanel : JPanel() {
 
     private fun populateJBList(targetListModel: DefaultListModel<String>, stringList: List<String>) {
         targetListModel.clear()
-        if (!cache.projectPathMap[projectComboBox.selectedItem]!!.isExternal || settings.externalProjectMode != 1)
         targetListModel.addAll(stringList)
     }
 
