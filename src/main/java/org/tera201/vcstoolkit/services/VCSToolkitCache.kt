@@ -6,12 +6,13 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.tera201.vcstoolkit.helpers.ProjectPath
 
 
 @State(name = "VCSToolkitCachesNew", storages = [Storage("vcs_toolkit_cache.xml")])
 class VCSToolkitCache : PersistentStateComponent<VCSToolkitCache> {
     var lastProject: String = ""
-    var projectPathMap:MutableMap<String, String> = hashMapOf()
+    var projectPathMap:MutableMap<String, ProjectPath> = hashMapOf()
 
 
     companion object {

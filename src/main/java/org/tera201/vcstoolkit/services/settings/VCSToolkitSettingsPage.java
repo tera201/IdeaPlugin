@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Hashtable;
 
 public class VCSToolkitSettingsPage implements Configurable {
 
@@ -24,6 +25,7 @@ public class VCSToolkitSettingsPage implements Configurable {
     private JButton repoBrowseButton;
     private JButton modelBrowseButton;
     private JCheckBox showLogsCheckBox;
+    private JSlider slider1;
 
     public VCSToolkitSettingsPage() {
 
@@ -34,6 +36,14 @@ public class VCSToolkitSettingsPage implements Configurable {
         modelBrowseButton.addActionListener(e -> {
             browseFolder(modelPathTextField);
         });
+
+        Hashtable<Integer, JLabel> labels = new Hashtable<>();
+        labels.put(0, new JLabel("Unsafe"));
+        labels.put(1, new JLabel("Safe"));
+//        labels.put(2, new JLabel("Deep copy"));
+//        labels.put(3, new JLabel("Commit"));
+
+        slider1.setLabelTable(labels);
     }
 
     private void browseFolder(@NotNull final JTextField target) {
@@ -70,7 +80,8 @@ public class VCSToolkitSettingsPage implements Configurable {
     private  boolean isModified(VCSToolkitSettings settings) {
         return !repoPathTextField.getText().equals(settings.getRepoPath()) ||
                 !modelPathTextField.getText().equals(settings.getModelPath()) ||
-                showLogsCheckBox.isSelected() != settings.getShowGitLogs();
+                showLogsCheckBox.isSelected() != settings.getShowGitLogs() ||
+                slider1.getValue() != settings.getExternalProjectMode();
     }
 
     @Override
@@ -92,12 +103,14 @@ public class VCSToolkitSettingsPage implements Configurable {
         settings.setRepoPath(repoPathTextField.getText());
         settings.setModelPath(modelPathTextField.getText());
         settings.setShowGitLogs(showLogsCheckBox.isSelected());
+        settings.setExternalProjectMode(slider1.getValue());
     }
 
     private void getSettings(VCSToolkitSettings settings) {
         repoPathTextField.setText(settings.getRepoPath());
         modelPathTextField.setText(settings.getModelPath());
         showLogsCheckBox.setSelected(settings.getShowGitLogs());
+        slider1.setValue(settings.getExternalProjectMode());
     }
 
 }

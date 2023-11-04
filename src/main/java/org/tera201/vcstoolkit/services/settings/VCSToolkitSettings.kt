@@ -14,7 +14,8 @@ class VCSToolkitSettings : PersistentStateComponent<VCSToolkitSettings> {
     var repoPath:String =  "${System.getProperty("user.dir")}/VCSToolkitCache"
 
     var modelPath:String = "${System.getProperty("user.dir")}/VCSToolkitCache/Models"
-    var showGitLogs:Boolean = true;
+    var showGitLogs:Boolean = true
+    var externalProjectMode:Int = 0
 
 
     companion object {
