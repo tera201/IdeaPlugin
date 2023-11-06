@@ -25,9 +25,9 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
     implementation("org.tera201:javafx-uml-graph:0.0.1-SNAPSHOT")
-    implementation("org.tera201:code-to-uml:0.0.2-SNAPSHOT")
-    implementation("org.tera201:swrminer:0.0.2-SNAPSHOT")
-    implementation("org.tera201:javafx-code-modeling-tool:1.0.0-SNAPSHOT")
+    implementation("org.tera201:code-to-uml:0.0.3-SNAPSHOT")
+    implementation("org.tera201:swrminer:0.1.0-SNAPSHOT")
+    implementation("org.tera201:javafx-code-modeling-tool:1.1.0-SNAPSHOT")
 }
 
 javafx {
@@ -70,6 +70,6 @@ tasks {
         kotlinOptions.apiVersion = "1.8"
     }
     patchPluginXml {
-        sinceBuild.set("203.*")
+        sinceBuild.set("221.*")
     }
 }

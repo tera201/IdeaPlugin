@@ -44,6 +44,12 @@
           <li>If project choosing not successful then notification will be sent
           <li>Support for projects without git
           <li>Set min size
+          <li>Add safe mode for external projects
+          <li>Add Commit mode for all project
+          <li>Update split panes
+          <li>Implement "Get uml model" button
+          <li>Add cache for git url field
+          <li>Upgrade selecting for Circle view
         </ul>
 
         <b>1.1.1</b> (11/01/2023)

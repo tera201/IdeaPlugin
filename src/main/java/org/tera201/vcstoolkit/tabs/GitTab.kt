@@ -14,13 +14,13 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.ColoredTreeCellRenderer
+import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PlatformIcons
-import com.intellij.util.ui.UIUtil
 import javafx.application.Platform
 import model.console.BuildModel
 import org.eclipse.uml2.uml.Model
@@ -34,13 +34,10 @@ import org.tera201.vcstoolkit.services.settings.VCSToolkitSettings
 import org.tera201.vcstoolkit.utils.toCircle
 import java.awt.Dimension
 import java.awt.FlowLayout
-import java.awt.Graphics
 import java.awt.event.*
 import java.io.File
 import java.io.IOException
 import javax.swing.*
-import javax.swing.plaf.basic.BasicSplitPaneDivider
-import javax.swing.plaf.basic.BasicSplitPaneUI
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import kotlin.concurrent.thread
@@ -55,14 +52,17 @@ class GitPanel : JPanel() {
     private val saveUmlFileButton = JButton("Save UML model")
     private val getUmlFileButton = JButton("Get UML model")
     private val buildModel = BuildModel()
-    private val logsJTextArea = JTextArea()
+    // TODO: problems with JBTextArea (IDEA freeze) when analyzing one branch
+    private val logsJTextArea = JTextArea().apply {
+        this.isEditable = false
+    }
     val logsJBScrollPane = JBScrollPane(
         logsJTextArea,
         JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
     )
     companion object {
-        val models = ArrayList<Model>()
+        var models = ArrayList<Model>()
         val modelListContent = SharedModel()
     }
     private val handler = UMLModelHandler()
@@ -78,11 +78,23 @@ class GitPanel : JPanel() {
     val pathJTree = Tree()
     private val projectComboBox = ComboBox<String>()
     private val openProjectButton = JButton("Open project")
-    private val vcSplitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT, branchListScrollPane, tagListScrollPane)
+    private val vcSplitPane = JBSplitter(true, 0.5f).apply {
+        this.firstComponent = branchListScrollPane
+        this.secondComponent = tagListScrollPane
+        this.dividerWidth = 1
+    }
     private val filesTreeJBScrollPane =
         JBScrollPane(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED)
-    private val showSplitPane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT, filesTreeJBScrollPane, vcSplitPane)
-    private val logModelSplitPane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT, logsJBScrollPane, modelListScrollPane)
+    private val showSplitPane = JBSplitter(false, 0.5f).apply {
+        this.firstComponent = filesTreeJBScrollPane
+        this.secondComponent = vcSplitPane
+        this.dividerWidth = 1
+    }
+    private val logModelSplitPane = JBSplitter(false, 0.5f).apply {
+        this.firstComponent = logsJBScrollPane
+        this.secondComponent = modelListScrollPane
+    this.dividerWidth = 1
+    }
     private val projectCache = "${System.getProperty("user.dir")}/VCSToolkitCache/"
     private val modelCache = "${System.getProperty("user.dir")}/VCSToolkitCache/Models"
     
@@ -117,7 +129,7 @@ class GitPanel : JPanel() {
                 }
             })
 
-        urlField.text = "https://github.com/arnohaase/a-foundation.git"
+        urlField.text = cache.urlField
         this.minimumSize = Dimension(0, 200)
         this.addComponentListener(object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
@@ -139,6 +151,7 @@ class GitPanel : JPanel() {
             thread {
                 //TODO: add regex
                 if (urlField.text != "") {
+                    cache.urlField = urlField.text
                     getRepoByUrl(urlField.text)
                 }
             }
@@ -246,31 +259,8 @@ class GitPanel : JPanel() {
     }
 
     private fun configureSplitPanes() {
-        showSplitPane.setUI(CustomSplitPaneUI())
-        vcSplitPane.setUI(CustomSplitPaneUI())
-        logModelSplitPane.setUI(CustomSplitPaneUI())
-        resizeSplitPaneDivider(showSplitPane)
-        resizeSplitPaneDivider(vcSplitPane)
-        resizeSplitPaneDivider(logModelSplitPane)
         setupListSelectionListeners()
         setupListDoubleClickAction()
-    }
-
-    private fun resizeSplitPaneDivider(jSplitPane: JSplitPane, ) {
-        jSplitPane.addComponentListener(object : ComponentAdapter() {
-            override fun componentResized(e: ComponentEvent?) {
-                super.componentResized(e)
-                if (jSplitPane.orientation == JSplitPane.HORIZONTAL_SPLIT) {
-                    val newWidth = e!!.component.width
-                    if (jSplitPane.dividerLocation != newWidth / 2)
-                        jSplitPane.dividerLocation = newWidth / 2
-                } else {
-                    val newHeight = e!!.component.height
-                    if (jSplitPane.dividerLocation != newHeight / 2)
-                        jSplitPane.dividerLocation = newHeight / 2
-                }
-            }
-        })
     }
 
     private fun setupListSelectionListeners() {
@@ -332,7 +322,9 @@ class GitPanel : JPanel() {
 
     private fun onListItemDoubleClicked(item: String) {
         println("Double clicked on item: $item")
+        myRepo?.scm?.createCommit("VCSToolkit: save message")
         buildModel.checkout(myRepo, item)
+        myRepo?.scm?.resetLastCommitsWithMessage("VCSToolkit: save message")
         updatePathPanel()
     }
 
@@ -405,6 +397,19 @@ class GitPanel : JPanel() {
 
             if (virtualFile != null) {
                 logsJTextArea.append("Get model from file: ${virtualFile.path}\n")
+                val modelList = handler.loadListModelFromFile(virtualFile.path)
+                if (modelList != null)
+                    models = modelList as ArrayList<Model>
+                    modelListContent.clear()
+                    modelListContent.addAll(models.stream().map { it.name }.toList())
+
+                    Platform.runLater {
+                        FXCircleTab.circleSpace.clean()
+                        for (i in 0 until models.size) {
+                            models[i].toCircle(i)
+                        }
+                        FXCircleTab.circleSpace.mainListObjects.forEach { it.updateView() }
+                    }
             }
         }
 //
@@ -517,19 +522,5 @@ private fun onTreeNodeDoubleClicked(node: DefaultMutableTreeNode?) {
         // TODO: should be current project (not first)
         ProjectManager.getInstance().openProjects.firstOrNull()
             ?.let { FileEditorManager.getInstance(it).openFile(virtualFile, true) }
-    }
-}
-
-class CustomSplitPaneUI : BasicSplitPaneUI() {
-    override fun createDefaultDivider(): BasicSplitPaneDivider {
-        return object : BasicSplitPaneDivider(this) {
-            override fun paint(g: Graphics) {
-                val bgColor = UIUtil.getPanelBackground()
-                val borderColor = ColorUtil.darker(bgColor, 1)
-                g.color = borderColor
-                g.fillRect(0, 0, size.width, size.height)
-                super.paint(g)
-            }
-        }
     }
 }
