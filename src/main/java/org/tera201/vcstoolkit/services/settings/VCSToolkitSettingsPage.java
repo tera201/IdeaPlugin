@@ -26,6 +26,10 @@ public class VCSToolkitSettingsPage implements Configurable {
     private JButton modelBrowseButton;
     private JCheckBox showLogsCheckBox;
     private JSlider slider1;
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JLabel usernameLabel;
+    private JLabel passworsLabel;
 
     public VCSToolkitSettingsPage() {
 
@@ -81,7 +85,9 @@ public class VCSToolkitSettingsPage implements Configurable {
         return !repoPathTextField.getText().equals(settings.getRepoPath()) ||
                 !modelPathTextField.getText().equals(settings.getModelPath()) ||
                 showLogsCheckBox.isSelected() != settings.getShowGitLogs() ||
-                slider1.getValue() != settings.getExternalProjectMode();
+                slider1.getValue() != settings.getExternalProjectMode() ||
+                !usernameField.getText().equals(settings.getUsername()) ||
+                !String.valueOf(passwordField.getPassword()).equals(settings.getPassword());
     }
 
     @Override
@@ -104,6 +110,8 @@ public class VCSToolkitSettingsPage implements Configurable {
         settings.setModelPath(modelPathTextField.getText());
         settings.setShowGitLogs(showLogsCheckBox.isSelected());
         settings.setExternalProjectMode(slider1.getValue());
+        settings.setUsername(usernameField.getText());
+        settings.setPassword(String.valueOf(passwordField.getPassword()));
     }
 
     private void getSettings(VCSToolkitSettings settings) {
@@ -111,6 +119,8 @@ public class VCSToolkitSettingsPage implements Configurable {
         modelPathTextField.setText(settings.getModelPath());
         showLogsCheckBox.setSelected(settings.getShowGitLogs());
         slider1.setValue(settings.getExternalProjectMode());
+        usernameField.setText(settings.getUsername());
+        passwordField.setText(settings.getPassword());
     }
 
 }
