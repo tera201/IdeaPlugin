@@ -41,11 +41,12 @@
           <li>Added threading for analyzing
           <li>Added git auth
           <li>Update VFS after branch switching
-          <li>fix commit/unsafe mode
-          <li>fix checkout for the analyzer
+          <li>Fixed commit/unsafe mode
+          <li>Fixed checkout for the analyzer
           <li>block checkout while the analyzer is running
           <li>Added labels for git panel
           <li>Analyzing without choosing tag or branch
+          <li>Fixed problems with changing mode between safe
         </ul>
         <b>1.2.0</b>
         <ul>
@@ -70,7 +71,7 @@
 
         <b>1.1.0</b> (11/01/2023)
         <ul>
-          <li>added a kludge to fix the bug with rendering after hiding
+          <li>Added a kludge to fix the bug with rendering after hiding
         </ul>
 
         <b>1.0.0</b> (10/31/2023)

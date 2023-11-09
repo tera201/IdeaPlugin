@@ -141,9 +141,8 @@ class GitPanel : JPanel() {
                     if (settings.externalProjectMode == 1 &&  cache.projectPathMap[projectComboBox.selectedItem]!!.isExternal) {
                         branchListModel.clear()
                         tagListModel.clear()
-                    } else if (myRepo != null) {
-                        populateJBList(branchListModel, buildModel.getBranches(myRepo).filter { it != "HEAD" })
-                        populateJBList(tagListModel, buildModel.getTags(myRepo))
+                    } else {
+                        projectComboBox.selectedItem = cache.lastProject
                     }
                 }
             })
@@ -264,15 +263,7 @@ class GitPanel : JPanel() {
                 if (myRepo?.scm?.currentBranchOrTagName != null)
                     currentBranchOrTagLabel.text = myRepo?.scm?.currentBranchOrTagName
             } else if (cache.projectPathMap[projectName]!!.isExternal && settings.externalProjectMode == 1) {
-                val isRepo = File("$projectPath/.git").exists()
-                val splitPath = projectPath.split("/")
-                val lastDirectory = splitPath[splitPath.size - 1]
-                var name = lastDirectory
-                if (isRepo) {
-                    myRepo = buildModel.getRepository(projectPath)
-                    name = myRepo!!.scm.currentBranchOrTagName
-                }
-                currentBranchOrTagLabel.text = name
+                currentBranchOrTagLabel.text = getProjectNameOrCurrentBranchOrTag(projectPath, isRepo)
                 branchListModel.clear()
                 tagListModel.clear()
                 externalWarningNotification()
@@ -282,10 +273,22 @@ class GitPanel : JPanel() {
                 val notification: Notification =
                     group.createNotification("Opps", content, NotificationType.WARNING)
                 Notifications.Bus.notify(notification, null);
+                currentBranchOrTagLabel.text = getProjectNameOrCurrentBranchOrTag(projectPath, isRepo)
                 branchListModel.clear()
                 tagListModel.clear()
             }
         }
+    }
+
+    private fun getProjectNameOrCurrentBranchOrTag(projectPath: String, isRepo:Boolean):String {
+        val splitPath = projectPath.split("/")
+        val lastDirectory = splitPath[splitPath.size - 1]
+        var name = lastDirectory
+        if (isRepo) {
+            myRepo = buildModel.getRepository(projectPath)
+            name = myRepo!!.scm.currentBranchOrTagName
+        }
+        return name
     }
 
     private fun configureSplitPanes() {
