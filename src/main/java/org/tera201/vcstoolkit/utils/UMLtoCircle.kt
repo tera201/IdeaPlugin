@@ -22,8 +22,7 @@ fun Package.toCircle(number: Int=0) {
 }
 
 private fun Package.generatePackage(circleParent: PackageCircle) {
-    val size = ownedComments[0].body.toDouble()
-    val side = size / 20
+    val size = if (ownedComments.isEmpty()) 700 else ownedComments[0].body.toDouble()
     val packageCircle = PackageCircle(name, circleParent.innerRadius/2 + 500, circleParent.innerRadius/2, height)
     circleParent.addObject(packageCircle)
     packagedElements
@@ -39,16 +38,16 @@ private fun Package.generatePackage(circleParent: PackageCircle) {
 }
 
 private fun Class.generateClass(circleParent: PackageCircle) {
-    val size = ownedComments[0].body.toDouble()
-    val methods = (ownedComments[1].body.toDouble() + 1) * 10
-    val side = size / 2
+    val size = if (ownedComments.isEmpty()) 700.0 else ownedComments[0].body.toDouble()
+    val methods = if (ownedComments.size > 1) (ownedComments[1].body.toDouble() + 1) * 10 else 10.0
+    val side =  size / 2
     val classCircle = ClassCircle(name, side + methods * 10, side, height)
     circleParent.addObject(classCircle)
 }
 
 private fun Interface.generateInterface(circleParent: PackageCircle) {
-    val size = ownedComments[0].body.toDouble()
-    val methods = (ownedComments[1].body.toDouble() + 1) * 10
+    val size = if (ownedComments.isEmpty()) 700.0 else ownedComments[0].body.toDouble()
+    val methods = if (ownedComments.size > 1) (ownedComments[1].body.toDouble() + 1) * 10 else 10.0
     val side = size / 2
     val classCircle = ClassCircle(name, side + methods * 10, side, height)
     circleParent.addObject(classCircle)
