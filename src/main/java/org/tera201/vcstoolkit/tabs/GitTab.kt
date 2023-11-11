@@ -443,11 +443,15 @@ class GitPanel : JPanel() {
                     modelListContent.addAll(models.stream().map { it.name }.toList())
 
                     Platform.runLater {
-                        FXCircleTab.circleSpace.clean()
-                        for (i in 0 until models.size) {
-                            models[i].toCircle(i)
+                        try {
+                            FXCircleTab.circleSpace.clean()
+                            for (i in 0 until models.size) {
+                                models[i].toCircle(i)
+                            }
+                            FXCircleTab.circleSpace.mainListObjects.forEach { it.updateView() }
+                        } catch (e:Exception) {
+                            createExceptionNotification(e)
                         }
-                        FXCircleTab.circleSpace.mainListObjects.forEach { it.updateView() }
                     }
                 }
             } else logsJTextArea.append("Get some repo for analyzing.\n")
@@ -459,7 +463,7 @@ class GitPanel : JPanel() {
                 false, false, false, false
             );
             descriptor.setTitle("Get UML-Model");
-            val toSelect = if (settings.modelPath.isNotEmpty()) null else LocalFileSystem.getInstance()
+            val toSelect = if (settings.modelPath.isEmpty()) null else LocalFileSystem.getInstance()
                 .findFileByPath(settings.modelPath)
             val virtualFile = FileChooser.chooseFile(descriptor, null, toSelect)
 
@@ -473,11 +477,15 @@ class GitPanel : JPanel() {
                     modelListContent.addAll(models.stream().map { it.name }.toList())
 
                     Platform.runLater {
-                        FXCircleTab.circleSpace.clean()
-                        for (i in 0 until models.size) {
-                            models[i].toCircle(i)
+                        try {
+                            FXCircleTab.circleSpace.clean()
+                            for (i in 0 until models.size) {
+                                models[i].toCircle(i)
+                            }
+                            FXCircleTab.circleSpace.mainListObjects.forEach { it.updateView() }
+                        } catch (e:Exception) {
+                            createExceptionNotification(e)
                         }
-                        FXCircleTab.circleSpace.mainListObjects.forEach { it.updateView() }
                     }
                 } catch (e: Exception) {
                     createExceptionNotification(e)
@@ -490,9 +498,9 @@ class GitPanel : JPanel() {
             val fileNameExt = if (models.size == 1) "" else "Pack"
             val descriptor = FileSaverDescriptor(
                 title, "Choose the destination file",
-                ".json"
+                "json"
             );
-            val toSelect = if (settings.modelPath.isNotEmpty()) null else LocalFileSystem.getInstance()
+            val toSelect = if (settings.modelPath.isEmpty()) null else LocalFileSystem.getInstance()
                 .findFileByPath(settings.modelPath)
             val fileSaverDialog = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, null)
             val fileName = if(SystemInfo.isMac) "${cache.lastProject}Model$fileNameExt.json"
