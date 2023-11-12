@@ -1,5 +1,6 @@
 package org.tera201.vcstoolkit.tabs
 
+import com.intellij.openapi.application.ApplicationManager
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.scene.Scene
@@ -12,6 +13,7 @@ import org.tera201.elements.FXSpace
 import org.tera201.elements.circle.ClassCircle
 import org.tera201.elements.circle.HollowCylinder
 import org.tera201.elements.circle.PackageCircle
+import org.tera201.vcstoolkit.services.settings.VCSToolkitSettings
 
 
 class FXCircleTab : JFXPanel() {
@@ -21,6 +23,7 @@ class FXCircleTab : JFXPanel() {
     }
     private val SCENE_WIDTH = 800.0
     private val SCENE_HEIGHT = 600.0
+    private var settings: VCSToolkitSettings = VCSToolkitSettings.getInstance()
 
     init {
         Platform.runLater { initFXCircle(circleSpace) }
@@ -53,6 +56,16 @@ class FXCircleTab : JFXPanel() {
 
         mainSubScene.heightProperty().bind(stackPane.heightProperty())
         mainSubScene.widthProperty().bind(stackPane.widthProperty())
+
+        mainSubScene.scrollSpeed = settings.circleScrollSpeed
+        ApplicationManager.getApplication().messageBus.connect()
+            .subscribe(VCSToolkitSettings.SettingsChangedListener.TOPIC, object :
+                VCSToolkitSettings.SettingsChangedListener {
+                override fun onSettingsChange(settings: VCSToolkitSettings) {
+                    mainSubScene.scrollSpeed = settings.circleScrollSpeed
+                    mainSubScene.isDynamicScrollSpeed = settings.circleDynamicScrollSpeed
+                }
+            })
 
         val scene2 = Scene(stackPane, SCENE_WIDTH, SCENE_HEIGHT, true, SceneAntialiasing.BALANCED)
         this.scene = scene2

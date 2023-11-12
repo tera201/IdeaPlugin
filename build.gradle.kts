@@ -27,7 +27,7 @@ dependencies {
     implementation("org.tera201:javafx-uml-graph:0.0.1-SNAPSHOT")
     implementation("org.tera201:code-to-uml:0.1.0-SNAPSHOT")
     implementation("org.tera201:swrminer:0.2.0-SNAPSHOT")
-    implementation("org.tera201:javafx-code-modeling-tool:1.1.0-SNAPSHOT")
+    implementation("org.tera201:javafx-code-modeling-tool:1.2.0-SNAPSHOT")
 }
 
 javafx {

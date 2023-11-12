@@ -47,6 +47,7 @@
           <li>Added labels for git panel
           <li>Analyzing without choosing tag or branch
           <li>Fixed problems with changing mode between safe
+          <li>Added slider for scroll speed
         </ul>
         <b>1.2.0</b>
         <ul>
