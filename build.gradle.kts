@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.16.0"
+    id("org.jetbrains.intellij") version "1.15.0"
     id("org.jetbrains.kotlin.jvm") version "1.8.10"
     id("org.openjfx.javafxplugin") version "0.0.14"
 }
@@ -37,7 +37,7 @@ javafx {
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
 intellij {
-    version.set("2022.2")
+    version.set("2023.2")
     type.set("IC") // Target IDE Platform
     plugins.set(listOf("com.intellij.javafx:1.0.4"))
 }
