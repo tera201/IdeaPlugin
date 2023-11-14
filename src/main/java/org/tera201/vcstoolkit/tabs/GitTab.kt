@@ -448,7 +448,7 @@ class GitPanel : JPanel() {
                             for (i in 0 until models.size) {
                                 models[i].toCircle(i)
                             }
-                            FXCircleTab.circleSpace.mainListObjects.forEach { it.updateView() }
+                            FXCircleTab.circleSpace.updateView()
                         } catch (e:Exception) {
                             createExceptionNotification(e)
                         }
