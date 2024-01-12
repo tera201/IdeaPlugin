@@ -20,22 +20,22 @@ import org.tera201.umlgraph.graphview.strategy.DigraphTreePlacementStrategy
 import org.tera201.umlgraph.graphview.strategy.PlacementStrategy
 import org.tera201.umlgraph.graphview.vertices.GraphVertex
 import org.tera201.umlgraph.graphview.vertices.elements.ElementTypes
+import org.tera201.vcstoolkit.helpers.SharedModel
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.JButton
 import javax.swing.JPanel
 import kotlin.jvm.optionals.getOrNull
 
-class FXGraphTab: JPanel() {
+class FXGraphTab(val tabManager: TabManager, val modelListContent:SharedModel): JPanel() {
 
     var graphView: GraphPanel<String, String>? = null
     private val fxPanel: JFXPanel = object : JFXPanel() {}
     private val topPanel = JPanel()
-    private val modelComboBox = ComboBox(GitPanel.modelListContent)
+    private val modelComboBox = ComboBox(modelListContent)
     private var model:Model? = null
     private val packageButton = JButton("Package")
     private val classButton = JButton("Class")
-//    private val rightPanel = JPanel()
 
     init {
         this.layout = BorderLayout()
@@ -53,7 +53,7 @@ class FXGraphTab: JPanel() {
         modelComboBox.addActionListener {
             if (modelComboBox.selectedItem != null) {
                 val selectedModelName = modelComboBox.selectedItem as String
-                model = GitPanel.models.stream().filter { it.name == selectedModelName }.findAny().getOrNull()
+                model = (tabManager.getTabMap()[TabEnum.GIT] as GitPanel).getModelList().stream().filter { it.name == selectedModelName }.findAny().getOrNull()
             }
         }
 
@@ -65,14 +65,8 @@ class FXGraphTab: JPanel() {
             if (model != null) graphView?.setTheGraph(build_class_graph(model!!))
         }
 
-//        rightPanel.layout = BoxLayout(rightPanel, BoxLayout.Y_AXIS)
-//        rightPanel.add(JRadioButton("Option 1"))
-//        rightPanel.add(JRadioButton("Option 2"))
-//        rightPanel.add(JRadioButton("Option 3"))
-
         Platform.runLater { make_fxPanel(fxPanel) }
         this.add(topPanel, BorderLayout.NORTH)
-//        this.add(rightPanel, BorderLayout.EAST)
         this.add(fxPanel, BorderLayout.CENTER)
     }
 

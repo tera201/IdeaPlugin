@@ -2,15 +2,18 @@ package org.tera201.vcstoolkit.utils
 
 import org.tera201.vcstoolkit.tabs.FXCircleTab
 import org.eclipse.uml2.uml.*
+import org.tera201.elements.FXSpace
 import org.tera201.elements.circle.ClassCircle
+import org.tera201.elements.circle.HollowCylinder
 import org.tera201.elements.circle.PackageCircle
+import org.tera201.elements.city.Quarter
 
 private const val height = 500.0
 private const val gap = 8000.0
-fun Package.toCircle(number: Int=0) {
+fun Package.toCircle(circleSpace: FXSpace<HollowCylinder>, number: Int=0) {
     val packageCircle = PackageCircle(name, 6000.0, 5500.0, height)
     packageCircle.translateY = number * gap
-    FXCircleTab.circleSpace.add(packageCircle)
+    circleSpace.add(packageCircle)
     packagedElements
         .filter { !it.hasKeyword("unknown") }
         .forEach {

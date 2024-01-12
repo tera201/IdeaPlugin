@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.tera201.vcstoolkit.helpers.ProjectPath
@@ -17,8 +18,8 @@ class VCSToolkitCache : PersistentStateComponent<VCSToolkitCache> {
 
 
     companion object {
-        fun getInstance(): VCSToolkitCache {
-            return ApplicationManager.getApplication().getService(VCSToolkitCache::class.java)
+        fun getInstance(project:Project): VCSToolkitCache {
+            return project.getService(VCSToolkitCache::class.java)
         }
     }
 

@@ -48,6 +48,8 @@
           <li>Analyzing without choosing tag or branch
           <li>Fixed problems with changing mode between safe
           <li>Added slider for scroll speed
+          <li>Circle and City view could be opened on full screen
+          <li>The plugin can work in different projects independently
         </ul>
         <b>1.2.0</b>
         <ul>
@@ -91,7 +93,7 @@
                 factoryClass="org.tera201.vcstoolkit.VCSToolWindowFactoryKt"/>
 
     <applicationService serviceImplementation="org.tera201.vcstoolkit.services.settings.VCSToolkitSettings"/>
-    <applicationService serviceImplementation="org.tera201.vcstoolkit.services.VCSToolkitCache"/>
+    <projectService serviceImplementation="org.tera201.vcstoolkit.services.VCSToolkitCache"/>
     <applicationConfigurable instance="org.tera201.vcstoolkit.services.settings.VCSToolkitSettingsPage" groupId="language"/>
     <notificationGroup
             id="VCSToolkitNotify"

@@ -11,7 +11,6 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -22,7 +21,6 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PlatformIcons
-import javafx.application.Platform
 import model.console.BuildModel
 import org.eclipse.uml2.uml.Model
 import org.repodriller.scm.SCMRepository
@@ -33,7 +31,6 @@ import org.tera201.vcstoolkit.helpers.ProjectPath
 import org.tera201.vcstoolkit.helpers.SharedModel
 import org.tera201.vcstoolkit.services.VCSToolkitCache
 import org.tera201.vcstoolkit.services.settings.VCSToolkitSettings
-import org.tera201.vcstoolkit.utils.toCircle
 import java.awt.*
 import java.awt.event.*
 import java.io.File
@@ -43,9 +40,9 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import kotlin.concurrent.thread
 
-class GitPanel : JPanel() {
+class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : JPanel() {
     private var settings: VCSToolkitSettings = VCSToolkitSettings.getInstance()
-    private var cache: VCSToolkitCache = VCSToolkitCache.getInstance()
+    private var cache: VCSToolkitCache = VCSToolkitCache.getInstance(tabManager.getCurrentProject())
     private var myRepo: SCMRepository? = null
     private val getButton = JButton("Get")
     private val urlField = JTextField()
@@ -62,10 +59,7 @@ class GitPanel : JPanel() {
         JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
     )
-    companion object {
-        var models = ArrayList<Model>()
-        val modelListContent = SharedModel()
-    }
+    private var models = ArrayList<Model>()
     private val handler = UMLModelHandler()
     private var isClearingSelection = false
     private val branchListModel = DefaultListModel<String>()
@@ -119,6 +113,11 @@ class GitPanel : JPanel() {
     
     init {
         initGit()
+    }
+
+
+    fun getModelList():ArrayList<Model> {
+        return models
     }
 
     private fun initGit() {
@@ -186,7 +185,9 @@ class GitPanel : JPanel() {
     }
 
     private fun addProjectPane() {
-        cache.projectPathMap["Current project"] = ProjectPath(true, ProjectManager.getInstance().openProjects[0].basePath.toString(), "${settings.repoPath}/${ProjectManager.getInstance().openProjects[0].name}")
+        println(tabManager.project.basePath.toString())
+        println(tabManager.project.name)
+        cache.projectPathMap["Current project"] = ProjectPath(true, tabManager.project.basePath.toString(), "${settings.repoPath}/${tabManager.project.name}")
 
         if (cache.projectPathMap.isNotEmpty()) {
             cache.projectPathMap.keys.forEach {
@@ -441,18 +442,11 @@ class GitPanel : JPanel() {
                     logsJTextArea.append("End analyzing. Execution time: $executionTime sec.\n")
                     analyzing = false
                     modelListContent.addAll(models.stream().map { it.name }.toList())
-
-                    Platform.runLater {
                         try {
-                            FXCircleTab.circleSpace.clean()
-                            for (i in 0 until models.size) {
-                                models[i].toCircle(i)
-                            }
-                            FXCircleTab.circleSpace.updateView()
+                            (tabManager.getTabMap()[TabEnum.CIRCLE] as FXCircleTab).renderByModel(models)
                         } catch (e:Exception) {
                             createExceptionNotification(e)
                         }
-                    }
                 }
             } else logsJTextArea.append("Get some repo for analyzing.\n")
         }
@@ -475,18 +469,7 @@ class GitPanel : JPanel() {
                         models = modelList as ArrayList<Model>
                     modelListContent.clear()
                     modelListContent.addAll(models.stream().map { it.name }.toList())
-
-                    Platform.runLater {
-                        try {
-                            FXCircleTab.circleSpace.clean()
-                            for (i in 0 until models.size) {
-                                models[i].toCircle(i)
-                            }
-                            FXCircleTab.circleSpace.mainListObjects.forEach { it.updateView() }
-                        } catch (e:Exception) {
-                            createExceptionNotification(e)
-                        }
-                    }
+                    (tabManager.getTabMap()[TabEnum.CIRCLE] as FXCircleTab).renderByModel(models)
                 } catch (e: Exception) {
                     createExceptionNotification(e)
                 }
@@ -605,14 +588,13 @@ class GitPanel : JPanel() {
             }
         })
     }
-}
 
-private fun onTreeNodeDoubleClicked(node: DefaultMutableTreeNode?) {
-    val filePath = node?.userObject.toString()
-    val virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath)
-    if (virtualFile != null) {
-        // TODO: should be current project (not first)
-        ProjectManager.getInstance().openProjects.firstOrNull()
-            ?.let { FileEditorManager.getInstance(it).openFile(virtualFile, true) }
+    private fun onTreeNodeDoubleClicked(node: DefaultMutableTreeNode?) {
+        val filePath = node?.userObject.toString()
+        val virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath)
+        if (virtualFile != null) {
+            // TODO: should be current project (not first)
+            FileEditorManager.getInstance(tabManager.getCurrentProject()).openFile(virtualFile, true)
+        }
     }
 }
