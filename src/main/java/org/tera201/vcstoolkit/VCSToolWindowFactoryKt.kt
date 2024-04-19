@@ -32,7 +32,7 @@ class VCSToolWindowFactoryKt : ToolWindowFactory {
         SwingUtilities.invokeLater {
             val tabManager = TabManager(project)
             val jtp = tabManager.getJBTabbedPane()
-            val actionManager = ActionManager(jtp, toolWindow)
+            val actionManager = ActionManager(jtp, toolWindow, tabManager)
 
             jtp.addChangeListener(object : ChangeListener {
                 override fun stateChanged(e: ChangeEvent?) {

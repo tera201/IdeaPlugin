@@ -27,7 +27,7 @@ import javax.swing.JButton
 import javax.swing.JPanel
 import kotlin.jvm.optionals.getOrNull
 
-class FXGraphTab(val tabManager: TabManager, val modelListContent:SharedModel): JPanel() {
+class FXGraphTab(private val tabManager: TabManager, modelListContent:SharedModel): JPanel() {
 
     var graphView: GraphPanel<String, String>? = null
     private val fxPanel: JFXPanel = object : JFXPanel() {}
@@ -53,7 +53,7 @@ class FXGraphTab(val tabManager: TabManager, val modelListContent:SharedModel): 
         modelComboBox.addActionListener {
             if (modelComboBox.selectedItem != null) {
                 val selectedModelName = modelComboBox.selectedItem as String
-                model = (tabManager.getTabMap()[TabEnum.GIT] as GitPanel).getModelList().stream().filter { it.name == selectedModelName }.findAny().getOrNull()
+                model = (tabManager.getTabMap()[TabEnum.GIT] as GitTab).models.stream().filter { it.name == selectedModelName }.findAny().getOrNull()
             }
         }
 

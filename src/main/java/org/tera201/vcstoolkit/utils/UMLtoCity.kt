@@ -7,7 +7,7 @@ import org.tera201.elements.city.City
 import org.tera201.elements.city.Quarter
 
 fun Package.toCity(citySpace: FXSpace<Quarter>) {
-    var city = City(8000.0, 20.0, 8000.0)
+    var city = City(8000.0, 20.0, 8000.0, name)
     citySpace.add(city)
     packagedElements
         .filter { !it.hasKeyword("unknown") }

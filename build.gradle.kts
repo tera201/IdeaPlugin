@@ -26,8 +26,11 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
     implementation("org.tera201:javafx-uml-graph:0.0.1-SNAPSHOT")
     implementation("org.tera201:code-to-uml:0.1.0-SNAPSHOT")
-    implementation("org.tera201:swrminer:0.2.0-SNAPSHOT")
-    implementation("org.tera201:javafx-code-modeling-tool:1.2.0-SNAPSHOT")
+    implementation("org.tera201:swrminer:0.3.0-SNAPSHOT")
+    implementation("org.tera201:javafx-code-modeling-tool:1.2.1-SNAPSHOT")
+    implementation("org.tera201:swing-components:1.0-SNAPSHOT")
+    implementation("com.formdev:flatlaf:3.4.1")
+    implementation("com.formdev:flatlaf-extras:3.4.1")
 }
 
 javafx {
@@ -37,7 +40,7 @@ javafx {
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
 intellij {
-    version.set("2023.2")
+    version.set("2024.1")
     type.set("IC") // Target IDE Platform
     plugins.set(listOf("com.intellij.javafx:1.0.4"))
 }

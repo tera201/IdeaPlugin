@@ -40,10 +40,10 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import kotlin.concurrent.thread
 
-class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : JPanel() {
+class GitTab(private val tabManager: TabManager, val modelListContent:SharedModel) : JPanel() {
     private var settings: VCSToolkitSettings = VCSToolkitSettings.getInstance()
     private var cache: VCSToolkitCache = VCSToolkitCache.getInstance(tabManager.getCurrentProject())
-    private var myRepo: SCMRepository? = null
+    var myRepo: SCMRepository? = null
     private val getButton = JButton("Get")
     private val urlField = JTextField()
     private val analyzeButton = JButton("Analyze")
@@ -59,7 +59,7 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
         JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
     )
-    private var models = ArrayList<Model>()
+    var models = ArrayList<Model>()
     private val handler = UMLModelHandler()
     private var isClearingSelection = false
     private val branchListModel = DefaultListModel<String>()
@@ -112,16 +112,6 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
     private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("VCSToolkitNotify")
     
     init {
-        initGit()
-    }
-
-
-    fun getModelList():ArrayList<Model> {
-        return models
-    }
-
-    private fun initGit() {
-
         try {
             File(settings.repoPath).mkdirs()
             File(settings.modelPath).mkdirs()
@@ -185,10 +175,8 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
     }
 
     private fun addProjectPane() {
-        println(tabManager.project.basePath.toString())
-        println(tabManager.project.name)
-        cache.projectPathMap["Current project"] = ProjectPath(true, tabManager.project.basePath.toString(), "${settings.repoPath}/${tabManager.project.name}")
-
+        cache.projectPathMap["Current project"] = ProjectPath(true, tabManager.project.basePath.toString(),
+            "${settings.repoPath}/${tabManager.project.name}")
         if (cache.projectPathMap.isNotEmpty()) {
             cache.projectPathMap.keys.forEach {
                 projectComboBox.addItem(it)
@@ -200,17 +188,22 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
         }
 
         File(settings.repoPath).list { dir, name -> File(dir, name).isDirectory.and(name != "Models") }?.forEach {
-            val path = "${settings.repoPath}/$it"
             if ((0 until projectComboBox.model.size).none { i -> projectComboBox.model.getElementAt(i) == it }) {
-                cache.projectPathMap[it] = ProjectPath(false, path, path)
+                cache.projectPathMap[it] = ProjectPath(false, "${settings.repoPath}/$it",
+                    "${settings.repoPath}/$it")
                 projectComboBox.addItem(it)
             }
         }
+        listenerForProjectComboBox()
+        listenerForOpenProjectButton()
+        this.add(projectComboBox)
+        this.add(openProjectButton)
+    }
 
+    private fun listenerForProjectComboBox() {
         projectComboBox.addActionListener {
             val selectedProject = projectComboBox.selectedItem as String
             val projectPath = cache.projectPathMap[selectedProject]
-
             val directory = File(projectPath?.path)
             if (directory.exists() && directory.isDirectory) {
                 projectPath?.let { updatePathPanelAndGitLists(selectedProject, it.path) }
@@ -222,23 +215,23 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
             }
             cache.lastProject = selectedProject
         }
+    }
 
+    private fun listenerForOpenProjectButton() {
         openProjectButton.addActionListener {
-            val descriptor = FileChooserDescriptor(false, true, false, false, false, false)
+            val descriptor = FileChooserDescriptor(false, true, false,
+                false, false, false)
             val toSelect = if (settings.repoPath.isEmpty()) null else LocalFileSystem.getInstance()
                 .findFileByPath(settings.repoPath)
             val selectedDirectory = FileChooser.chooseFile(descriptor, null, toSelect)
             if (selectedDirectory != null) {
                 val newProjectName = selectedDirectory.name
-                val copyPath = "${settings.repoPath}/${selectedDirectory.name}"
-                cache.projectPathMap[newProjectName] = ProjectPath(true, selectedDirectory.path, copyPath)
+                cache.projectPathMap[newProjectName] = ProjectPath(true, selectedDirectory.path,
+                    "${settings.repoPath}/${selectedDirectory.name}")
                 projectComboBox.addItem(newProjectName)
                 projectComboBox.selectedItem = newProjectName
             }
         }
-
-        this.add(projectComboBox)
-        this.add(openProjectButton)
     }
 
     private fun createNotification(title:String, message:String, notificationType: NotificationType) {
@@ -323,12 +316,7 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
                     isClearingSelection = false
                 }
                 val selected = this@addClearSelectorByAnotherList.selectedValuesList.size + anotherList.selectedValuesList.size
-                if (selected == 1) {
-                    analyzeButton.text = "Analyze"
-                }
-                else {
-                    analyzeButton.text = "AnalyzeAll"
-                }
+                analyzeButton.text = if (selected == 1) "Analyze" else "AnalyzeAll"
             }
         })
     }
@@ -401,9 +389,19 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
 
     private fun addModelControlPanel() {
         val modelControlPanel = JPanel()
+        listenerForAnalyzeButton()
+        listenerForGetUmlFileButton()
+        listenerForSaveUmlButton()
+        modelControlPanel.add(analyzeButton)
+        modelControlPanel.add(saveUmlFileButton)
+        modelControlPanel.add(getUmlFileButton)
+        this.add(modelControlPanel)
+    }
+
+    private fun listenerForAnalyzeButton() {
         analyzeButton.addActionListener {
-            if (myRepo != null) {
-                thread {
+            thread {
+                if (cache.projectPathMap[cache.lastProject] != null) {
                     val projectPath = cache.projectPathMap[cache.lastProject]?.path
                     analyzing = true
                     val startTime = System.currentTimeMillis()
@@ -411,46 +409,21 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
                     models.clear()
                     modelListContent.clear()
                     logsJTextArea.append("Start analyzing.\n")
-                    for (i in allList) {
-                        logsJTextArea.append("\t*modeling: $i\n")
-                        logsJTextArea.caret.dot = logsJTextArea.text.length
-                        checkoutTo(i)
-                        try {
-                            val analyzerBuilder = AnalyzerBuilder(Language.Java, i, myRepo!!.path)
-                                .textArea(logsJTextArea).threads(4)
-                            models.add(analyzerBuilder.build())
-                        } catch (e:Exception) {
-                            createExceptionNotification(e)
-                        }
-                    }
-                    if (allList.size == 1) saveUmlFileButton.text = "Save UML model"
+                    allList.forEach { analyze(true, it, myRepo!!.path) }
+                    if (allList.size == 1 || allList.isEmpty()) saveUmlFileButton.text = "Save UML model"
                     else saveUmlFileButton.text = "Save UML model pack"
-                    if (allList.isEmpty() && projectPath != null) {
-                        saveUmlFileButton.text = "Save UML model"
-                        logsJTextArea.append("\t*modeling: ${currentBranchOrTagLabel.text}\n")
-                        try {
-                            val analyzerBuilder =
-                                AnalyzerBuilder(Language.Java, currentBranchOrTagLabel.text, projectPath)
-                                    .textArea(logsJTextArea).threads(4)
-                            models.add(analyzerBuilder.build())
-                        } catch (e:Exception) {
-                            createExceptionNotification(e)
-                        }
-                    }
-                    val endTime = System.currentTimeMillis()
-                    val executionTime = (endTime - startTime) / 1000.0
+                    if (allList.isEmpty() && projectPath != null) analyze(false, currentBranchOrTagLabel.text, projectPath)
+                    val executionTime = (System.currentTimeMillis() - startTime) / 1000.0
                     logsJTextArea.append("End analyzing. Execution time: $executionTime sec.\n")
                     analyzing = false
                     modelListContent.addAll(models.stream().map { it.name }.toList())
-                        try {
-                            (tabManager.getTabMap()[TabEnum.CIRCLE] as FXCircleTab).renderByModel(models)
-                        } catch (e:Exception) {
-                            createExceptionNotification(e)
-                        }
-                }
-            } else logsJTextArea.append("Get some repo for analyzing.\n")
+                    buildCircle()
+                }else logsJTextArea.append("Get some repo or project for analyzing.\n")
+            }
         }
+    }
 
+    private fun listenerForGetUmlFileButton() {
         getUmlFileButton.addActionListener {
             val descriptor = FileChooserDescriptor(
                 true, false,
@@ -475,7 +448,9 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
                 }
             }
         }
-//
+    }
+
+    private fun listenerForSaveUmlButton() {
         saveUmlFileButton.addActionListener {
             val title =  if (models.size == 1) "SAVE UML-MODEL" else "SAVE UML-MODEL PACK"
             val fileNameExt = if (models.size == 1) "" else "Pack"
@@ -499,11 +474,28 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
                 }
             }
         }
+    }
 
-        modelControlPanel.add(analyzeButton)
-        modelControlPanel.add(saveUmlFileButton)
-        modelControlPanel.add(getUmlFileButton)
-        this.add(modelControlPanel)
+    private fun buildCircle() {
+        try {
+            (tabManager.getTabMap()[TabEnum.CIRCLE] as FXCircleTab).renderByModel(models)
+        } catch (e:Exception) {
+            createExceptionNotification(e)
+        }
+    }
+
+    private fun analyze(isGit: Boolean, name: String, projectPath: String) {
+        logsJTextArea.append("\t*modeling: ${currentBranchOrTagLabel.text}\n")
+        logsJTextArea.caret.dot = logsJTextArea.text.length
+        try {
+            if (isGit) checkoutTo(name)
+            val analyzerBuilder =
+                AnalyzerBuilder(Language.Java, name, projectPath)
+                    .textArea(logsJTextArea).threads(4)
+            models.add(analyzerBuilder.build())
+        } catch (e:Exception) {
+            createExceptionNotification(e)
+        }
     }
 
     private fun getRepoByUrl(url: String) {
@@ -519,9 +511,8 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
                 }
             } else {
                 logsJTextArea.append("Cloning: ${url}\n")
-                if (settings.username.equals(""))
-                    myRepo = buildModel.createClone(url, settings.repoPath)
-                else myRepo = buildModel.createClone(url, settings.repoPath, settings.username, settings.password)
+                myRepo = if (settings.username.equals("")) buildModel.createClone(url, settings.repoPath)
+                else buildModel.createClone(url, settings.repoPath, settings.username, settings.password)
                 logsJTextArea.append("Cloned to ${myRepo!!.path}\n")
                 projectComboBox.addItem(repoName)
             }
@@ -553,7 +544,6 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
         }
     }
 
-
     private fun setupTree() {
         pathJTree.cellRenderer = object : ColoredTreeCellRenderer() {
             override fun customizeCellRenderer(
@@ -567,10 +557,8 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
             ) {
                 val node = value as? DefaultMutableTreeNode ?: return
                 val file = File(node.userObject.toString())
-                if (file.isDirectory) {
-                    icon = PlatformIcons.FOLDER_ICON
-                } else
-                    icon = FileTypeManager.getInstance().getFileTypeByFileName(file.name).icon
+                icon = if (file.isDirectory) PlatformIcons.FOLDER_ICON
+                else FileTypeManager.getInstance().getFileTypeByFileName(file.name).icon
                 append(file.name)
             }
         }
@@ -592,9 +580,7 @@ class GitPanel(val tabManager: TabManager, val modelListContent:SharedModel) : J
     private fun onTreeNodeDoubleClicked(node: DefaultMutableTreeNode?) {
         val filePath = node?.userObject.toString()
         val virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath)
-        if (virtualFile != null) {
-            // TODO: should be current project (not first)
+        if (virtualFile != null)
             FileEditorManager.getInstance(tabManager.getCurrentProject()).openFile(virtualFile, true)
-        }
     }
 }

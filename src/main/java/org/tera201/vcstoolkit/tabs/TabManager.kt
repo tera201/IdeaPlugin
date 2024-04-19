@@ -11,7 +11,7 @@ class TabManager (val project:Project) {
     private val jtp = JBTabbedPane()
     private val modelListContent = SharedModel()
     private val tabMap = hashMapOf(TabEnum.GRAPH to FXGraphTab(this, modelListContent), TabEnum.CITY to FXCityTab(this, modelListContent),
-        TabEnum.CIRCLE to  FXCircleTab(this), TabEnum.GIT to GitPanel(this, modelListContent))
+        TabEnum.CIRCLE to  FXCircleTab(this), TabEnum.GIT to GitTab(this, modelListContent))
     init {
         jtp.autoscrolls = true
         jtp.add(TabEnum.GRAPH.value, tabMap[TabEnum.GRAPH])

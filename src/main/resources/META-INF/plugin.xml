@@ -37,6 +37,11 @@
   <change-notes>
     <![CDATA[
       <html>
+        <b>1.4.0</b>
+          <li> Added info button for stat
+          <li> Added template for stat
+          <li> Fixed text of tip
+        </ul>
         <b>1.3.0</b>
           <li>Added threading for analyzing
           <li>Added git auth
@@ -50,6 +55,7 @@
           <li>Added slider for scroll speed
           <li>Circle and City view could be opened on full screen
           <li>The plugin can work in different projects independently
+          <li>Analyzing not git project
         </ul>
         <b>1.2.0</b>
         <ul>
