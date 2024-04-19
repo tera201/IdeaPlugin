@@ -127,6 +127,8 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
                 VCSToolkitSettings.SettingsChangedListener {
                 override fun onSettingsChange(settings: VCSToolkitSettings) {
                     logsJBScrollPane.isVisible = settings.showGitLogs
+                    createDirectoryIfNotExists(settings.repoPath)
+                    createDirectoryIfNotExists(settings.modelPath)
                     if (settings.externalProjectMode == 1 &&  cache.projectPathMap[projectComboBox.selectedItem]!!.isExternal) {
                         branchListModel.clear()
                         tagListModel.clear()
@@ -241,7 +243,8 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
     }
 
     private fun createExceptionNotification(e:Exception) {
-        val content = "message: ${e.message}\nstackTrace: ${e.stackTrace.joinToString("\n")}"
+        val content = "${e.message}"
+        System.err.println("message: ${e.message}\nstackTrace: ${e.stackTrace.joinToString("\n")}")
         createNotification(e.javaClass.simpleName, content, NotificationType.ERROR)
     }
 
@@ -335,7 +338,7 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
                     val index = jbList.locationToIndex(e.point)
                     if (index >= 0) {
                         val selectedItem = jbList.model.getElementAt(index)
-                        onListItemDoubleClicked(selectedItem)
+                        checkoutTo(selectedItem)
                     }
                 } else if (analyzing) {
                     createNotification("Checkout freeze",
@@ -345,11 +348,6 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
         }
     }
 
-    private fun onListItemDoubleClicked(item: String) {
-        println("Double clicked on item: $item")
-        checkoutTo(item)
-    }
-
     private fun checkoutTo(item:String) {
         val fileSystem = LocalFileSystem.getInstance()
         val virtualFile: VirtualFile? = fileSystem.findFileByPath(myRepo!!.path)
@@ -357,7 +355,7 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
         try {
             if (settings.externalProjectMode == 2)
                 myRepo?.scm?.createCommit("VCSToolkit: save message")
-            buildModel.checkout(myRepo, item)
+            myRepo!!.scm.checkoutTo(item)
             if (myRepo?.scm?.currentBranchOrTagName != null)
                 currentBranchOrTagLabel.text = myRepo?.scm?.currentBranchOrTagName
             if (settings.externalProjectMode == 2)
@@ -430,6 +428,7 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
                 false, false, false, false
             );
             descriptor.setTitle("Get UML-Model");
+            createDirectoryIfNotExists(settings.modelPath)
             val toSelect = if (settings.modelPath.isEmpty()) null else LocalFileSystem.getInstance()
                 .findFileByPath(settings.modelPath)
             val virtualFile = FileChooser.chooseFile(descriptor, null, toSelect)
@@ -457,7 +456,8 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
             val descriptor = FileSaverDescriptor(
                 title, "Choose the destination file",
                 "json"
-            );
+            )
+            createDirectoryIfNotExists(settings.modelPath)
             val toSelect = if (settings.modelPath.isEmpty()) null else LocalFileSystem.getInstance()
                 .findFileByPath(settings.modelPath)
             val fileSaverDialog = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, null)
@@ -498,8 +498,16 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
         }
     }
 
+    private fun createDirectoryIfNotExists(path: String) {
+        val directory = File(path)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+    }
+
     private fun getRepoByUrl(url: String) {
         val repoName = buildModel.getRepoNameByUrl(url)
+        createDirectoryIfNotExists(settings.repoPath)
         val directoryPath = "${settings.repoPath}/$repoName"
         val directory = File(directoryPath)
         try {
@@ -524,6 +532,7 @@ class GitTab(private val tabManager: TabManager, val modelListContent:SharedMode
     }
 
     private fun updatePathPanel() {
+//        println(cache.projectPathMap[cache.lastProject]?.path)
         val root = DefaultMutableTreeNode(cache.projectPathMap[cache.lastProject]?.path)
         buildTree(File(cache.projectPathMap[cache.lastProject]?.path), root)
         pathJTree.model = DefaultTreeModel(root)
